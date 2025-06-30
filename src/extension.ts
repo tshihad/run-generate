@@ -2,6 +2,9 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
+// Global terminal reference for reuse
+let runGenerateTerminal: vscode.Terminal | undefined;
+
 /**
  * CodeLens provider for Go files that shows run buttons for //go:generate lines
  */
@@ -73,10 +76,6 @@ class GoGenerateCodeLensProvider implements vscode.CodeLensProvider {
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Run Generate extension is now active!');
-
 	// Register the CodeLens provider for Go files
 	const codeLensProvider = new GoGenerateCodeLensProvider();
 	const codeLensDisposable = vscode.languages.registerCodeLensProvider(
@@ -111,26 +110,25 @@ export function activate(context: vscode.ExtensionContext) {
 				}, async (progress) => {
 					progress.report({ message: `Executing: ${command}` });
 
-					// Create and show a terminal
-					const terminal = vscode.window.createTerminal({
-						name: `Go Generate${lineNumber ? ` (Line ${lineNumber})` : ''}`,
-						cwd: workspaceFolder.uri.fsPath
-					});
-
-					terminal.show();
+					// Check if we have an existing terminal and if it's still alive
+					if (runGenerateTerminal && runGenerateTerminal.exitStatus === undefined) {
+						// Reuse existing terminal
+						runGenerateTerminal.show();
+					} else {
+						// Create a new terminal if none exists or the previous one was closed
+						runGenerateTerminal = vscode.window.createTerminal({
+							name: 'Run Generate',
+							cwd: workspaceFolder.uri.fsPath
+						});
+						runGenerateTerminal.show();
+					}
 
 					// Send the command to the terminal
-					terminal.sendText(command);
+					runGenerateTerminal.sendText(command);
 
 					// Brief delay to show progress
 					await new Promise(resolve => setTimeout(resolve, 500));
 				});
-
-				// Show success message
-				const message = lineNumber
-					? `Running command from line ${lineNumber}: ${command}`
-					: `Running: ${command}`;
-				vscode.window.showInformationMessage(message);
 
 			} catch (error) {
 				console.error('Error running go:generate command:', error);
@@ -139,9 +137,22 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	);
 
+	// Listen for terminal close events to clean up our reference
+	const terminalCloseDisposable = vscode.window.onDidCloseTerminal(closedTerminal => {
+		if (runGenerateTerminal === closedTerminal) {
+			runGenerateTerminal = undefined;
+		}
+	});
+
 	// Add subscriptions to context so they are disposed when extension is deactivated
-	context.subscriptions.push(codeLensDisposable, configChangeDisposable, runCommandDisposable);
+	context.subscriptions.push(codeLensDisposable, configChangeDisposable, runCommandDisposable, terminalCloseDisposable);
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() { }
+export function deactivate() {
+	// Clean up the terminal if it exists
+	if (runGenerateTerminal && runGenerateTerminal.exitStatus === undefined) {
+		runGenerateTerminal.dispose();
+	}
+	runGenerateTerminal = undefined;
+}

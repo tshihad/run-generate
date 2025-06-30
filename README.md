@@ -52,20 +52,9 @@ To disable the CodeLens feature, add this to your VS Code settings:
 
 ## Installation
 
-### From VS Code Marketplace (Recommended)
-1. Open VS Code
-2. Go to the Extensions view (`Ctrl+Shift+X` on Windows/Linux or `Cmd+Shift+X` on macOS)
-3. Search for "Run Generate"
-4. Click "Install" on the extension by [Your Publisher Name]
-
-Alternatively, you can install it from the command line:
-```bash
-code --install-extension [publisher].[extension-name]
-```
-
 ### From VSIX Package
 If you have a `.vsix` file:
-1. Download the `.vsix` file from the [Releases page](https://github.com/your-username/run-generate/releases)
+1. Download the `.vsix` file from the [Releases page](https://github.com/tshihad9/run-generate/releases)
 2. In VS Code, go to Extensions view (`Ctrl+Shift+X` or `Cmd+Shift+X`)
 3. Click the "..." menu (Views and More Actions) and select "Install from VSIX..."
 4. Select the downloaded `.vsix` file
@@ -75,18 +64,18 @@ If you have a `.vsix` file:
 For developers who want to build from source:
 1. Clone this repository:
    ```bash
-   git clone https://github.com/your-username/run-generate.git
+   git clone https://github.com/tshihad9/run-generate.git
    cd run-generate
    ```
 2. Install dependencies:
    ```bash
    npm install
    ```
-3. Compile the extension:
+3. install the extension:
    ```bash
-   npm run compile
+   npx @vscode/vsce package
+   code --install-extension run-generate-1.0.1.vsix
    ```
-4. Press `F5` in VS Code to open a new Extension Development Host window with the extension loaded
 
 ## Development
 
@@ -112,45 +101,4 @@ This extension contributes the following settings:
 * `myExtension.enable`: Enable/disable this extension.
 * `myExtension.thing`: Set to `blah` to do something.
 
-## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
