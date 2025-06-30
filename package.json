@@ -1,0 +1,78 @@
+{
+  "name": "run-generate",
+  "displayName": "Run Generate",
+  "description": "A VS Code extension for running //go:generate commands directly from your Go source files",
+  "version": "1.0.0",
+  "publisher": "your-publisher-name",
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/your-username/run-generate#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/run-generate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/run-generate/issues"
+  },
+  "keywords": [
+    "go",
+    "golang",
+    "generate",
+    "go:generate",
+    "code generation",
+    "protobuf",
+    "mockgen"
+  ],
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:go"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "run-generate.runGoGenerate",
+        "title": "Run Go Generate",
+        "icon": "$(play)"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Run Generate",
+      "properties": {
+        "runGenerate.enableCodeLens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable CodeLens for //go:generate lines"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.101.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "eslint": "^9.25.1",
+    "typescript": "^5.8.3",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
