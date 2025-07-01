@@ -1,9 +1,16 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as path from 'path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 // Global terminal reference for reuse
 let runGenerateTerminal: vscode.Terminal | undefined;
+// Global output channel for showing command results
+let outputChannel: vscode.OutputChannel | undefined;
 
 /**
  * CodeLens provider for Go files that shows run buttons for //go:generate lines
@@ -102,6 +109,11 @@ export function activate(context: vscode.ExtensionContext) {
 					return;
 				}
 
+				// Create output channel if it doesn't exist
+				if (!outputChannel) {
+					outputChannel = vscode.window.createOutputChannel('Run Generate');
+				}
+
 				// Show progress indicator
 				await vscode.window.withProgress({
 					location: vscode.ProgressLocation.Notification,
@@ -110,24 +122,55 @@ export function activate(context: vscode.ExtensionContext) {
 				}, async (progress) => {
 					progress.report({ message: `Executing: ${command}` });
 
-					// Check if we have an existing terminal and if it's still alive
-					if (runGenerateTerminal && runGenerateTerminal.exitStatus === undefined) {
-						// Reuse existing terminal
-						runGenerateTerminal.show();
-					} else {
-						// Create a new terminal if none exists or the previous one was closed
-						runGenerateTerminal = vscode.window.createTerminal({
-							name: 'Run Generate',
-							cwd: workspaceFolder.uri.fsPath
+					// Get the directory of the current file
+					const fileDirectory = documentUri.fsPath;
+					const directoryPath = path.dirname(fileDirectory);
+
+					// Show the output channel
+					outputChannel!.show(true);
+					outputChannel!.appendLine(`\n=== Running go:generate command ===`);
+					outputChannel!.appendLine(`Directory: ${directoryPath}`);
+					outputChannel!.appendLine(`Command: ${command}`);
+					outputChannel!.appendLine(`Time: ${new Date().toLocaleTimeString()}`);
+					outputChannel!.appendLine('');
+
+					try {
+						// Execute the command in the file's directory
+						const { stdout, stderr } = await execAsync(command, {
+							cwd: directoryPath,
+							timeout: 30000 // 30 second timeout
 						});
-						runGenerateTerminal.show();
+
+						// Show stdout if there's any
+						if (stdout) {
+							outputChannel!.appendLine('Output:');
+							outputChannel!.appendLine(stdout);
+						}
+
+						// Show stderr if there's any (but not as an error since some tools use stderr for info)
+						if (stderr) {
+							outputChannel!.appendLine('Messages:');
+							outputChannel!.appendLine(stderr);
+						}
+
+						outputChannel!.appendLine('=== Command completed successfully ===\n');
+					} catch (error: any) {
+						// Handle execution errors
+						outputChannel!.appendLine('Error:');
+						if (error.stdout) {
+							outputChannel!.appendLine('stdout:');
+							outputChannel!.appendLine(error.stdout);
+						}
+						if (error.stderr) {
+							outputChannel!.appendLine('stderr:');
+							outputChannel!.appendLine(error.stderr);
+						}
+						outputChannel!.appendLine(`Error message: ${error.message}`);
+						outputChannel!.appendLine('=== Command failed ===\n');
+
+						// Show error message
+						vscode.window.showErrorMessage(`Command failed: ${error.message}`);
 					}
-
-					// Send the command to the terminal
-					runGenerateTerminal.sendText(command);
-
-					// Brief delay to show progress
-					await new Promise(resolve => setTimeout(resolve, 500));
 				});
 
 			} catch (error) {
@@ -155,4 +198,10 @@ export function deactivate() {
 		runGenerateTerminal.dispose();
 	}
 	runGenerateTerminal = undefined;
+
+	// Clean up the output channel if it exists
+	if (outputChannel) {
+		outputChannel.dispose();
+	}
+	outputChannel = undefined;
 }
